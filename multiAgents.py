@@ -176,6 +176,9 @@ class MinimaxAgent(MultiAgentSearchAgent):
         else:
             best_index = self._min_index(scores_list)
 
+        if agent > 0:
+            return (None, None, scores_list[best_index][2])
+
         return (action_list[best_index], successor_list[best_index], scores_list[best_index][2])
 
     @staticmethod
@@ -299,7 +302,52 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self._action_recurse(gameState, self.depth, 0)[0]
+    def _action_recurse(self, gameState, level, agent):
+
+        if level == 0:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        action_list = gameState.getLegalActions(agent)
+        if not action_list:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        successor_list = [gameState.generateSuccessor(agent, action) for action in action_list]
+
+        if agent >= gameState.getNumAgents() - 1:
+            scores_list = [self._action_recurse(succ_state, level - 1, 0) for succ_state in successor_list]
+
+        else:
+            scores_list = [self._action_recurse(succ_state, level, agent + 1) for succ_state in successor_list]
+
+        if agent == 0:
+            best_index = self._max_index(scores_list)
+            return (action_list[best_index], successor_list[best_index], scores_list[best_index][2])
+
+        else:
+
+
+            return (None, None, self._avg_score(scores_list))
+
+
+    @staticmethod
+    def _max_index(scores_list):
+        curr_index = 0
+        curr_max = float('-inf')
+        for i in range(len(scores_list)):
+            score = scores_list[i][2]
+            if score > curr_max:
+                curr_max = score
+                curr_index = i
+        return curr_index
+
+    @staticmethod
+    def _avg_score(scores_list):
+        total = 0
+        length = len(scores_list)
+        for i in range(length):
+            total += scores_list[i][2]
+        return total/length
 
 def betterEvaluationFunction(currentGameState):
     """
