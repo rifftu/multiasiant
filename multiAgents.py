@@ -151,7 +151,54 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self._action_recurse(gameState, self.depth, 0)[0]
+
+    def _action_recurse(self, gameState, level, agent):
+
+        if level == 0:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        action_list = gameState.getLegalActions(agent)
+        if not action_list:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        successor_list = [gameState.generateSuccessor(agent, action) for action in action_list]
+
+        if agent >= gameState.getNumAgents() - 1:
+            scores_list = [self._action_recurse(succ_state, level - 1, 0) for succ_state in successor_list]
+
+        else:
+            scores_list = [self._action_recurse(succ_state, level, agent + 1) for succ_state in successor_list]
+
+        if agent == 0:
+            best_index = self._max_index(scores_list)
+
+        else:
+            best_index = self._min_index(scores_list)
+
+        return (action_list[best_index], successor_list[best_index], scores_list[best_index][2])
+
+    @staticmethod
+    def _max_index(scores_list):
+        curr_index = 0
+        curr_max = float('-inf')
+        for i in range(len(scores_list)):
+            score = scores_list[i][2]
+            if score > curr_max:
+                curr_max = score
+                curr_index = i
+        return curr_index
+
+    @staticmethod
+    def _min_index(scores_list):
+        curr_index = 0
+        curr_min = float('inf')
+        for i in range(len(scores_list)):
+            score = scores_list[i][2]
+            if score < curr_min:
+                curr_min = score
+                curr_index = i
+        return curr_index
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -163,7 +210,81 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self._action_recurse(gameState, self.depth, 0, float('-inf'), float('inf'))[0]
+
+
+    def _action_recurse(self, gameState, level, agent, alpha, beta):
+
+        if level == 0:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        action_list = gameState.getLegalActions(agent)
+        if not action_list:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        #successor_list = [gameState.generateSuccessor(agent, action) for action in action_list]
+
+        successor_list = []
+
+        scores_list = []
+
+        if agent >= gameState.getNumAgents() - 1:
+            next_level = level - 1
+            next_agent = 0
+        else:
+            next_level = level
+            next_agent = agent + 1
+
+
+        if agent == 0:
+
+
+            v = float('-inf')
+
+            for i in range(len(action_list)):
+
+                action = action_list[i]
+
+                succ_state = gameState.generateSuccessor(agent, action)
+
+                successor_list.append(succ_state)
+
+                succ = self._action_recurse(succ_state, next_level, next_agent, alpha, beta)
+
+                scores_list.append(succ)
+
+                if succ[2] > v:
+                    v = succ[2]
+                    best_index = i
+                if v > beta:
+                    return (action_list[i], successor_list[i], v)
+                alpha = max(alpha, v)
+
+        else:
+            v = float('inf')
+
+            for i in range(len(action_list)):
+
+                action = action_list[i]
+
+                succ_state = gameState.generateSuccessor(agent, action)
+
+                successor_list.append(succ_state)
+
+                succ = self._action_recurse(succ_state, next_level, next_agent, alpha, beta)
+
+                scores_list.append(succ)
+
+                if succ[2] < v:
+                    v = succ[2]
+                    best_index = i
+                if v < alpha:
+                    return (action_list[i], successor_list[i], v)
+                beta = min(beta, v)
+
+
+        return (action_list[best_index], successor_list[best_index], scores_list[best_index][2])
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
