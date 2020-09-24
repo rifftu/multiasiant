@@ -151,7 +151,69 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self._action_recurse(gameState, self.depth, 0)[0]
+
+    def _action_recurse(self, gameState, level, agent):
+
+        #return da leaf
+        if level == 0:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        # get dem actions
+        action_list = gameState.getLegalActions(agent)
+
+        # dead end == leaf
+        if not action_list:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        # get them succ states
+        successor_list = [gameState.generateSuccessor(agent, action) for action in action_list]
+
+        # if this is the last agent, next recursion will be the next depth
+        if agent >= gameState.getNumAgents() - 1:
+            scores_list = [self._action_recurse(succ_state, level - 1, 0) for succ_state in successor_list]
+        # otherwise, it is the next agent for the same depth
+        else:
+            scores_list = [self._action_recurse(succ_state, level, agent + 1) for succ_state in successor_list]
+
+        # pac man wants max score
+        if agent == 0:
+            best_index = self._max_index(scores_list)
+
+        # ghost man wants min score
+        else:
+            best_index = self._min_index(scores_list)
+
+        # pacman needs to return actions. ghost only needs to return score. who cares what the ghost is planning to do
+        if agent > 0:
+            return (None, None, scores_list[best_index][2])
+
+        # return the best action, the best followup state, and the score.
+        return (action_list[best_index], successor_list[best_index], scores_list[best_index][2])
+
+    @staticmethod
+    def _max_index(scores_list):
+        """self explanatory tbh"""
+        curr_index = 0
+        curr_max = float('-inf')
+        for i in range(len(scores_list)):
+            score = scores_list[i][2]
+            if score > curr_max:
+                curr_max = score
+                curr_index = i
+        return curr_index
+
+    @staticmethod
+    def _min_index(scores_list):
+        """self explanatory tbh"""
+        curr_index = 0
+        curr_min = float('inf')
+        for i in range(len(scores_list)):
+            score = scores_list[i][2]
+            if score < curr_min:
+                curr_min = score
+                curr_index = i
+        return curr_index
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -163,7 +225,83 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self._action_recurse(gameState, self.depth, 0, float('-inf'), float('inf'))[0]
+
+
+    def _action_recurse(self, gameState, level, agent, alpha, beta):
+
+        # same as minimax
+        if level == 0:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        action_list = gameState.getLegalActions(agent)
+        if not action_list:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        # we don't generate all the successors (only generate if necessary)
+        successor_list = []
+
+        scores_list = []
+
+        # determine the args for next level of recursion. if is last agent, increment depth
+        if agent >= gameState.getNumAgents() - 1:
+            next_level = level - 1
+            next_agent = 0
+        # otherwise, increment agent using the same depth
+        else:
+            next_level = level
+            next_agent = agent + 1
+
+        # pac man uses the find max thingy
+        if agent == 0:
+
+        # just following the pseudocode
+            v = float('-inf')
+
+            for i in range(len(action_list)):
+
+                action = action_list[i]
+
+                succ_state = gameState.generateSuccessor(agent, action)
+
+                successor_list.append(succ_state)
+
+                succ = self._action_recurse(succ_state, next_level, next_agent, alpha, beta)
+
+                scores_list.append(succ)
+
+                if succ[2] > v:
+                    v = succ[2]
+                    best_index = i
+                if v > beta:
+                    return (action_list[i], successor_list[i], v)
+                alpha = max(alpha, v)
+
+        else:
+            v = float('inf')
+
+            for i in range(len(action_list)):
+
+                action = action_list[i]
+
+                succ_state = gameState.generateSuccessor(agent, action)
+
+                successor_list.append(succ_state)
+
+                succ = self._action_recurse(succ_state, next_level, next_agent, alpha, beta)
+
+                scores_list.append(succ)
+
+                if succ[2] < v:
+                    v = succ[2]
+                    best_index = i
+                if v < alpha:
+                    return (action_list[i], successor_list[i], v)
+                beta = min(beta, v)
+
+
+        return (action_list[best_index], successor_list[best_index], scores_list[best_index][2])
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -178,7 +316,58 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self._action_recurse(gameState, self.depth, 0)[0]
+
+    def _action_recurse(self, gameState, level, agent):
+        """
+        everything here is same as in minimax except the end
+        """
+
+        if level == 0:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        action_list = gameState.getLegalActions(agent)
+        if not action_list:
+            return (None, gameState, self.evaluationFunction(gameState))
+
+        successor_list = [gameState.generateSuccessor(agent, action) for action in action_list]
+
+        if agent >= gameState.getNumAgents() - 1:
+            scores_list = [self._action_recurse(succ_state, level - 1, 0) for succ_state in successor_list]
+
+        else:
+            scores_list = [self._action_recurse(succ_state, level, agent + 1) for succ_state in successor_list]
+
+        # same pac man return thing as minimax
+        if agent == 0:
+            best_index = self._max_index(scores_list)
+            return (action_list[best_index], successor_list[best_index], scores_list[best_index][2])
+
+        # for the ghost, instead of returning the min score, return the average instead. bc reasons.
+        else:
+
+
+            return (None, None, self._avg_score(scores_list))
+
+
+    @staticmethod
+    def _max_index(scores_list):
+        curr_index = 0
+        curr_max = float('-inf')
+        for i in range(len(scores_list)):
+            score = scores_list[i][2]
+            if score > curr_max:
+                curr_max = score
+                curr_index = i
+        return curr_index
+
+    @staticmethod
+    def _avg_score(scores_list):
+        total = 0
+        length = len(scores_list)
+        for i in range(length):
+            total += scores_list[i][2]
+        return total/length
 
 def betterEvaluationFunction(currentGameState):
     """
