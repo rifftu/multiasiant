@@ -77,14 +77,19 @@ class ReflexAgent(Agent):
         score = 0
         currentFood = currentGameState.getFood()
         
+        # get the food with the least distance to paccy boi
         minDist = 9999999
         for food in newFood.asList():
             minDist = min(minDist, util.manhattanDistance(newPos, food))
+        
+        # 1/minDist because the less the dist the better
         score += 1/minDist
 
+        # if pacman is on a currentfood, give it extra score so it doesn't stop all the time
         if currentFood[newPos[0]][newPos[1]]:
-            score += 1
+            score += 10
 
+        # if manhattan distance of ghost to paccy boi is less than 2, gtfo
         for ghost in newGhostStates:
             ghostPos = ghost.configuration.getPosition()
             if manhattanDistance(ghostPos, newPos) < 2:
@@ -378,28 +383,19 @@ def betterEvaluationFunction(currentGameState):
     """
     "*** YOUR CODE HERE ***"
     # Useful information you can extract from a GameState (pacman.py)
-    successorGameState = currentGameState.generatePacmanSuccessor(action)
-    newPos = successorGameState.getPacmanPosition()
-    newFood = successorGameState.getFood()
-    newGhostStates = successorGameState.getGhostStates()
+    newPos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood()
+    newGhostStates = currentGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-    "*** YOUR CODE HERE ***"
-    score = 0
+    score = currentGameState.getScore()
     currentFood = currentGameState.getFood()
-        
+    currentCapsules = currentGameState.getCapsules()
+    
     minDist = 9999999
     for food in newFood.asList():
         minDist = min(minDist, util.manhattanDistance(newPos, food))
     score += 1/minDist
-
-    if currentFood[newPos[0]][newPos[1]]:
-        score += 1
-
-    for ghost in newGhostStates:
-        ghostPos = ghost.configuration.getPosition()
-        if manhattanDistance(ghostPos, newPos) < 2:
-            score -= 1000
 
     return score
 
